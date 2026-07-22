@@ -626,6 +626,18 @@ export function applyPitchEdit(
   }
 }
 
+/**
+ * ユーザーによるボリューム編集データを、クエリのvolumeに適用する。
+ * 編集値が保存されているフレームのみ、元のボリュームを編集値で置き換える。
+ * 音声が不自然になるのを防ぐため、隣接フレーズ境界のpau区間には適用しない。
+ *
+ * @param phraseQuery - 適用対象のクエリ
+ * @param phraseStartTime - フレーズの開始時刻（秒）
+ * @param volumeEditData - ユーザーが編集したボリュームデータの配列
+ * @param editorFrameRate - エディターのフレームレート
+ * @param minNonPauseStartFrame - 適用してよい非pau区間の開始フレーム（フレーズ先頭からのフレーム数）。undefinedなら制限しない
+ * @param maxNonPauseEndFrame - 適用してよい非pau区間の終了フレーム（フレーズ先頭からのフレーム数）。undefinedなら制限しない
+ */
 export function applyVolumeEdit(
   phraseQuery: EditorFrameAudioQuery,
   phraseStartTime: number,
@@ -663,8 +675,9 @@ export function applyVolumeEdit(
     if (editedVolume === VALUE_INDICATING_NO_DATA) {
       continue;
     }
-    // NOTE: ボリューム編集結果が負値になるケースに備えて0以上にクランプする
-    volume[i - phraseQueryStartFrame] = Math.max(editedVolume, 0);
+    const indexInPhrase = i - phraseQueryStartFrame;
+    // NOTE: 編集結果が負値になるケースに備えて0以上にクランプする
+    volume[indexInPhrase] = Math.max(editedVolume, 0);
   }
 }
 
